@@ -4,19 +4,20 @@ import './Search.css'
 import { useState } from 'react';
 
 
-export default function SearchBox(){
+export default function SearchBox({updateInfo}){
     let [city,setCity]=useState("")
-
-    const API_URL="https://api.openweathermap.org/data/2.5/weather";
-    const API_KEY="b7f512b9fa0810795be05bb4e0e16d66";
+    let [err,setErr]=useState(false);
+    const API_KEY = import.meta.env.VITE_API_KEY;
+    const API_URL = import.meta.env.VITE_API_URL;
     
     let getWeatherInfo=async()=>{
-        console.log("i am here")
-        let resposne=await fetch(`${API_URL}?q=${city}&appid=${API_KEY}&units=metric`);
+        try{
+            let resposne=await fetch(`${API_URL}?q=${city}&appid=${API_KEY}&units=metric`);
         let jsonResponse=await resposne.json();
         console.log(jsonResponse)
 
         let result={
+            city:city,
             temp: jsonResponse.main.temp,
             tempMin: jsonResponse.main.temp_min,
             tempMax: jsonResponse.main.temp_max,
@@ -24,27 +25,40 @@ export default function SearchBox(){
             feelslike:jsonResponse.main.feels_like,
             weather:jsonResponse.weather[0].description,
         }
-        console.log(result)
-        
+        return result; 
+    }
+    catch(err){
+        throw err;
+    }
+               
     }
 
     let handleChange=(evt)=>{
         setCity(evt.target.value)
     }
-    let handleSubmit=(evt)=>{
-        evt.preventDefault();
+    let handleSubmit= async (evt)=>{
+        try{
+                 evt.preventDefault();
         console.log(city);
         setCity("");
-        getWeatherInfo();
+        setErr(false);
+        let newInfo=await getWeatherInfo();
+        updateInfo(newInfo)
+        }
+        catch(err){
+            setErr(true);
+        }
+       
     }
     return(
         <div className='searchBox'>
-        <h3> Search for waether</h3>
         <form action="" onSubmit={handleSubmit}>
     <TextField id="city" label="City Name" variant="outlined" required  value={city} onChange={handleChange}/>
         <br />
         <br></br>
          <Button variant="contained" type="submit">Search</Button>
+
+         {err && <p style={{color:"red"}}>No such place exist! </p>}
         
         </form>
         </div>
